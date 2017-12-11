@@ -1,0 +1,67 @@
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">班级说说</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      
+      <%if(login){%>
+       <ul class="nav navbar-nav">
+      <li <%if(active == "首页"){%> class="active" <%}%>><a href="/">首页 <span class="sr-only">(current)</span></a></li>
+         <li <%if(active == "我的说说"){%> class="active" <%}%>><a href="/user/<%=username%>">我的说说</a></li>
+         <li <%if(active == "成员列表"){%> class="active" <%}%>><a href="/userlist">成员列表</a></li>
+      </ul>
+      <%}%>
+
+
+    <div class="navbar-right">
+      <%if(!login){%>
+        <a class="btn btn-success navbar-btn" href="/login" role="button">登录</a>
+        <a class="btn btn-success navbar-btn" href="/regist" role="button">注册</a>
+      <%}else{%>
+        <ul class="nav navbar-nav">
+          <li class="navbar-text">欢迎您！<%= username%></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">设置个人资料</a>
+            <ul class="dropdown-menu" role="menu" style="text-align:center;">  
+              <li><a href="/setavatar"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span>  设置头像</a></li>  
+              <li id="logout" style="cursor:pointer;"><span class="glyphicon glyphicon-log-out" aria-hidden="true"></span>  退出登录</li>  
+            </ul>  
+          </li>
+        </ul>
+      <%}%>
+      
+    </div>
+    </div><!--/.navbar-collapse -->
+  </div>
+</nav>
+<script type="text/javascript">
+   $('#logout').click(function(){
+      
+      if(confirm("真的要退出吗?")){
+       // 向服务器发出请求，取消session,并重定向到首页
+       $.post("/dologout",{
+         
+       },function(result){
+          console.log(result);
+          if(result == "false"){
+            // alert("退出成功,将返回首页");
+            window.location = "/";
+          }
+          else{
+            alert(result);
+          }
+         
+       });
+      }
+      else{
+       // do nothing 
+      }
+    });
+</script>

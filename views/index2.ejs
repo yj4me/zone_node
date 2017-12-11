@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="/favicon.ico">
+
+    <title>班级说说</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="/css/jumbotron.css" rel="stylesheet">
+  </head>
+
+  <body>
+    
+    <%include header.ejs%>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+      <%if(!login){%>
+        <div class="row">
+          <div class="col-md-6">
+            <h1>班级说说</h1>
+            <p>分享生活&nbsp;&nbsp; 留住感动</p>
+          </div>
+          <div class="col-md-6">
+            <h2>账号密码登录</h2>
+          <form>
+            <div class="form-group">
+              <label for="username">用户名</label>
+              <input type="text" class="form-control" id="username" placeholder="用户名可以是中文，但不能重复">
+            </div>
+            <div class="form-group">
+              <label for="password">密码</label>
+              <input type="password" class="form-control" id="password" placeholder="密码至少要6位">
+            </div>
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" checked="checked" >记住我
+              </label>
+            </div>
+            <button type="button" class="btn btn-success" id="denglu">登录</button>
+            <a class="btn btn-info navbar-btn" href="/regist" role="button">还没有帐号？去注册&raquo;</a>
+          </form>
+           <div class="alert alert-danger" role="alert" style="display: none;margin-top: 10px;" id="wrong"></div>
+          </div>
+        </div>
+      <%}else{%>
+        <h2>
+          <a href="/setavatar"><img src="/avatar/<%= avatar%>"></a>
+          <span style="color: red;"><%= username%></span> 的一句话签名
+        </h2>
+        <textarea cols="80" rows="4" id="neirong"></textarea>
+        <p><a class="btn btn-primary btn-lg" href="#" role="button" id="fabiao">发表 &raquo;</a></p>
+      <%}%>
+        
+      </div>
+    </div>
+
+    <!-- 登录才显示 ，用ajax列出所有说说，使用前端模版！！！-->
+    <%if(login){%>
+
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row" id="allshuoshuo">
+
+      </div>
+    </div> <!-- /container -->
+
+    <%}%>
+    
+     <%include footer.ejs%>
+
+    <!-- 前端anderscore的标记 -->
+    <script type="text/template" id="tpl">
+        <div class="col-md-4">
+          <h2><img src="/avatar/{{= avatar}}" style="width: 40px;">{{= username}}说：</h2>
+          <p>{{= content}}</p>
+          <p><a class="btn btn-default" href="#" role="button">查看详细&raquo;</a></p>
+        </div>
+    </script>
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/underscore-min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+      // 注册按钮的事件，用ajax提交表单
+      $("#denglu").click(function(){
+         $.post("/dologin",{
+            "username":$("#username").val(),
+            "password":$("#password").val()
+            
+          },function(result){
+              if(result == "1"){
+                
+                // 登录成功
+                 alert("登录成功,将返回首页");
+  
+                 window.location = "/";
+              }else if(result == "-1"){
+                // 用户不存在
+                 $("#wrong").fadeIn();
+                 $("#wrong").html("此用户不存在！");
+              }else if(result == "-2"){
+                // 密码错误
+                 $("#wrong").fadeIn();
+                 $("#wrong").html("您输入的密码有误，请重新输入");
+              }else if(result == "-3"){
+                // 服务器发生错误
+                alert("服务器发生错误，请刷新重试！");
+              }
+          });
+      })
+
+      // 获取焦点时提示文本消失
+      $("input").focus(function(){
+        $("#wrong").hide();
+      })
+
+
+      // 点击发布按钮之后做的事情
+      $("#fabiao").click(function(){
+         $.post("/postshuohsuo",{
+            
+            "content":$("#neirong").val()
+            
+          },function(result){
+              if(result == "1"){
+                
+                //发表成功，要显示出来
+                alert("发布成功！");
+          
+              }else if(result == "-1"){
+                alert("发布失败，请联系管理员！");
+              }else if(result == "-3"){
+                // 服务器发生错误
+                alert("服务器发生错误，请刷新重试！");
+              }
+          });
+      })
+
+
+      // ajax读取所有说说
+
+      // 得到模版内容
+      var tpl = $("#tpl").html();  
+      // 模版函数
+      var compiled = _.template(tpl);
+      var nowpage =1;
+
+      getData(nowpage);
+
+      // 将请求封装成函数
+      function getData(page){
+
+        // 这种嵌套的ajax请求对用户体验不好，chrome浏览器会发出警告
+        // [Deprecation] Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check https://xhr.spec.whatwg.org/.
+
+        $.ajax({
+          "url":"/allshuoshuo?page="+(page-1),
+          "type":"get",
+          "success":function(data,result){
+            // 打印数据
+            console.log(data);
+            var datas = data.result;
+             // 显示数据
+            for(var i = 0;i < datas.length;i++){
+
+              // 根据username去查询头像
+              // ajax请求的嵌套，内层函数必须是同步请求 
+              $.ajax({
+                "url":"/userinfo?username="+ datas[i].username,
+                "type":"get",
+                "async":false, //同步
+                "success":function(result2){
+                  console.log("userinfo=="+result2);
+                    // 获取到一组数据
+                    // 字典追加，字典修饰
+                  datas[i].avatar = result2.avatar;
+
+                  var zidian = compiled(datas[i]);  
+                  // 将解析后的内容填充到渲染元素  
+                  // $(zidian)可以将字符串转化成对象
+                  $("#allshuoshuo").append($(zidian));
+                }
+
+              });
+            }
+              
+          }
+        })
+      }
+    </script>
+  </body>
+</html>

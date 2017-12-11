@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="/favicon.ico">
+
+    <title>班级说说</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="/css/jumbotron.css" rel="stylesheet">
+     <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/underscore-min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+
+  <body>
+    
+    <%include header.ejs%>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+      <%if(!login){%>
+        <div class="row">
+          <div class="col-md-6">
+            <h1>班级说说</h1>
+            <p>分享生活&nbsp;&nbsp; 留住感动</p>
+          </div>
+          <div class="col-md-6">
+            <h2>账号密码登录</h2>
+          <form>
+            <div class="form-group">
+              <label for="username">用户名</label>
+              <input type="text" class="form-control" id="username" placeholder="用户名可以是中文，但不能重复" pattern="^[\u4e00-\u9fa5]+*$" required="required">
+              <!--匹配任意汉字-->
+            </div>
+            <div class="form-group">
+              <label for="password">密码</label>
+              <input type="password" class="form-control" id="password" placeholder="密码至少要6位" required="required" minlength="6" maxlength="14">
+            </div>
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" checked="checked" >记住我
+              </label>
+            </div>
+            <button type="button" class="btn btn-success" id="denglu">登录</button>
+            <a class="btn btn-info navbar-btn" href="/regist" role="button">还没有帐号？去注册&raquo;</a>
+          </form>
+           <div class="alert alert-danger" role="alert" style="display: none;margin-top: 10px;" id="wrong"></div>
+          </div>
+        </div>
+      <%}else{%>
+        <h2>
+          <a href="/setavatar"><img src="/avatar/<%= avatar%>" style="border-radius: 50px;"></a>
+          <span style="color: red;"><%= username%></span> 的一句话签名
+        </h2>
+        <textarea cols="80" rows="4" id="neirong"></textarea>
+        <p><a class="btn btn-primary btn-lg" href="#" role="button" id="fabiao">发表 &raquo;</a></p>
+      <%}%>
+        
+      </div>
+    </div>
+
+    <!-- 登录才显示 ，用ajax列出所有说说，使用前端模版！！！-->
+    <%if(login){%>
+
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row" id="allshuoshuo">
+
+      </div>
+      <nav aria-label="Page navigation" class="text-center">
+        <ul class="pagination"> 
+              
+        </ul>
+      </nav>
+      <!-- 分页加载数据 -->
+      <script type="text/javascript">
+      $.get("/shuoshuoamount",function(result){
+        var amount = parseInt(result);
+        // 总页数
+        pageamount = Math.ceil(amount/10);
+        $(".pagination").append("<li class='pre' style='display:none;'><a href='#' aria-label='Previous'><span aria-hidden='true'>&laquo;</span></a></li>");
+        for(var i = 1;i<= pageamount;i++){
+          $(".pagination").append("<li class='item' data-page='"+ i+"'><a href='#''>"+i+"</a></li>");
+        }
+        $(".pagination").append("<li class='next'><a href='#' aria-label='Next'><span aria-hidden='true'>&raquo;</span></a></li>");
+        $(".pagination li:nth-child(2)").addClass("active");
+        $(".pagination li").click(function(){
+
+          var index = $(this).index();
+         
+          getData(index);
+          $(this).addClass("active").siblings().removeClass("active");
+        })
+      })
+     
+    </script>
+    </div> <!-- /container -->
+
+    <%}%>
+    
+     <%include footer.ejs%>
+
+    <!-- 前端anderscore的标记 -->
+    <script type="text/template" id="tpl">
+        <div class="col-md-4">
+          <h2><img src="/avatar/{{= avatar}}" style="width: 40px;border-radius: 20px;">{{= username}}说：</h2>
+          <p>{{= content}}</p>
+          <p><a class="btn btn-default" href="#" role="button">查看详细&raquo;</a></p>
+        </div>
+    </script>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+   
+    <script type="text/javascript">
+      // 注册按钮的事件，用ajax提交表单
+      $("#denglu").click(function(){
+       
+        // 判空
+        if($('#username').val() != "" && $('#password').val() != ""){
+
+         $.post("/dologin",{
+            "username":$("#username").val(),
+            "password":$("#password").val()
+            
+          },function(result){
+              if(result == "1"){
+                
+                // 登录成功
+                 alert("登录成功,将返回首页");
+  
+                 window.location = "/";
+              }else if(result == "-1"){
+                // 用户不存在
+                 $("#wrong").fadeIn();
+                 $("#wrong").html("此用户不存在！");
+              }else if(result == "-2"){
+                // 密码错误
+                 $("#wrong").fadeIn();
+                 $("#wrong").html("您输入的密码有误，请重新输入");
+              }else if(result == "-3"){
+                // 服务器发生错误
+                alert("服务器发生错误，请刷新重试！");
+              }
+          });
+        }else{
+          alert("用户名或密码不能为空");
+        }
+      })
+
+      // 获取焦点时提示文本消失
+      $("input").focus(function(){
+        $("#wrong").hide();
+      })
+
+
+      // 点击发布按钮之后做的事情
+      $("#fabiao").click(function(){
+        if($("#neirong").val() != ''){
+         $.post("/postshuohsuo",{
+            
+            "content":$("#neirong").val()
+            
+          },function(result){
+              if(result == "1"){
+                
+                //发表成功，要显示出来
+                alert("发布成功！");
+                window.location = "/";
+          
+              }else if(result == "-1"){
+                alert("发布失败，请联系管理员！");
+              }else if(result == "-3"){
+                // 服务器发生错误
+                alert("服务器发生错误，请刷新重试！");
+              }
+          });
+        }else{
+          alert("发表内容不能为空！");
+        }
+      })
+
+
+      // ajax读取所有说说
+
+      // 得到模版内容
+      var tpl = $("#tpl").html();  
+      // 模版函数
+      var compiled = _.template(tpl);
+      var nowpage =1;
+
+      getData(nowpage);
+
+      // 将请求封装成函数
+      function getData(page){
+
+        // 清空数据
+        $("#allshuoshuo").html("");
+
+        // 这种嵌套的ajax请求对用户体验不好，chrome浏览器会发出警告
+        // [Deprecation] Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check https://xhr.spec.whatwg.org/.
+
+        // 解决办法就是使用迭代器
+
+        $.ajax({
+          "url":"/allshuoshuo?page="+(page-1),
+          "type":"get",
+          "success":function(data,result){
+            // 打印数据
+            console.log(data);
+            var datas = data.result;
+            iterator(0);
+
+            // 迭代器
+            function iterator(i){
+              
+              if(i == datas.length){
+                // 在这里书写请求完毕之后的事情
+                console.log("datas.length=="+datas.length);
+                return;
+              }
+              $.get("/userinfo?username="+ datas[i].username,function(data2,result2){
+                console.log("userinfo=="+data2.toString());
+                // results==success/failed
+                // 获取到一组数据
+                // 字典追加，字典修饰
+                datas[i].avatar = data2.avatar;
+
+                var zidian = compiled(datas[i]);  
+                // 将解析后的内容填充到渲染元素  
+                // $(zidian)可以将字符串转化成对象
+                $("#allshuoshuo").append($(zidian));
+                iterator(i+1);
+              })
+            }
+
+          }
+        })
+      }
+    </script>
+  </body>
+</html>
